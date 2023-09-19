@@ -25,6 +25,8 @@ torchaudio = [
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.15.0"
 ruff = "^0.0.290"
+pyink = "^23.5.0"
+isort = "^5.12.0"
 
 
 [[tool.poetry.source]]
