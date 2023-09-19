@@ -8,9 +8,18 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-torch = {version = "^2.0.1+cu118", source = "torch_cu118"}
-torchvision = {version = "^0.15.2+cu118", source = "torch_cu118"}
-torchaudio = {version = "^2.0.2+cu118", source = "torch_cu118"}
+torch = [
+  {platform = "linux", version = "^2.0.1+cu118", source = "torch_cu118"},
+  {platform = "darwin", version = "^2.0.1"},
+]
+torchvision = [
+  {platform = "linux", version = "^0.15.2+cu118", source = "torch_cu118"},
+  {platform = "darwin", version = "^0.15.2"},
+]
+torchaudio = [
+  {platform = "linux", version = "^2.0.2+cu118", source = "torch_cu118"},
+  {platform = "darwin", version = "^2.0.2"},
+]
 
 
 [tool.poetry.group.dev.dependencies]
