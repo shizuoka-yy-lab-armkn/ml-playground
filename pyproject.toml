@@ -18,12 +18,12 @@ priority = "explicit"
 [tool.poetry.dependencies]
 python = "^3.11"
 torch = [
-  {platform = "linux", version = "^2.0.1+cu121", source = "torch_cu121"},
-  {platform = "darwin", version = "^2.0.1", source = "pypi"},
+  {platform = "linux", version = "~2.0.1+cu121", source = "torch_cu121"},
+  {platform = "darwin", version = "~2.0.1", source = "pypi"},
 ]
 torchvision = [
-  {platform = "linux", version = "^0.16.0+cu121", source = "torch_cu121"},
-  {platform = "darwin", version = "^0.16.0", source = "pypi"},
+  {platform = "linux", version = "~0.16.0+cu121", source = "torch_cu121"},
+  {platform = "darwin", version = "~0.16.0", source = "pypi"},
 ]
 
 
