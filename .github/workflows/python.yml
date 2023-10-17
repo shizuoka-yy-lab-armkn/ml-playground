@@ -38,6 +38,9 @@ jobs:
           cache: poetry
           cache-dependency-path: 'pyproject.toml'
 
+      - name: Validate pyproject.toml
+        run: poetry check
+
       - name: Install dependencies
         run: make install
 
