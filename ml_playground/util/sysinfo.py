@@ -1,7 +1,11 @@
+from logging import getLogger
+
 import torch
 
+_log = getLogger(__name__)
 
-def print_cuda_info() -> None:
-    print(f"{torch.cuda.is_available()=}")
-    print(f"{torch.backends.cudnn.m.version()=}")  # type:ignore
-    print(f"{torch.backends.cudnn.m.is_available()=}")  # type:ignore
+
+def log_cuda_info() -> None:
+    _log.info(f"{torch.cuda.is_available()=}")
+    _log.info(f"{torch.backends.cudnn.is_available()=}")
+    _log.info(f"{torch.backends.cudnn.version()=}")
