@@ -36,9 +36,10 @@ jobs:
         with:
           python-version: '3.11'
           cache: poetry
+          cache-dependency-path: 'pyproject.toml'
 
       - name: Install dependencies
-        run: make dev/install
+        run: make install
 
       - run: make lint
 
