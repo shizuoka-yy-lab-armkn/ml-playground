@@ -9,19 +9,21 @@ packages = [
   { include = "ml_playground" },
 ]
 
+
+[[tool.poetry.source]]
+name = "torch_cu121"
+url = "https://download.pytorch.org/whl/cu121"
+priority = "explicit"
+
 [tool.poetry.dependencies]
 python = "^3.11"
 torch = [
-  {platform = "linux", version = "^2.0.1+cu118", source = "torch_cu118"},
+  {platform = "linux", version = "^2.0.1+cu121", source = "torch_cu121"},
   {platform = "darwin", version = "^2.0.1", source = "pypi"},
 ]
 torchvision = [
-  {platform = "linux", version = "^0.15.2+cu118", source = "torch_cu118"},
-  {platform = "darwin", version = "^0.15.2", source = "pypi"},
-]
-torchaudio = [
-  {platform = "linux", version = "^2.0.2+cu118", source = "torch_cu118"},
-  {platform = "darwin", version = "^2.0.2", source = "pypi"},
+  {platform = "linux", version = "^0.16.0+cu121", source = "torch_cu121"},
+  {platform = "darwin", version = "^0.16.0", source = "pypi"},
 ]
 
 
@@ -30,12 +32,6 @@ ipython = "^8.15.0"
 ruff = "^0.0.290"
 pyink = "^23.5.0"
 isort = "^5.12.0"
-
-
-[[tool.poetry.source]]
-name = "torch_cu118"
-url = "https://download.pytorch.org/whl/cu118"
-priority = "explicit"
 
 [build-system]
 requires = ["poetry-core"]
