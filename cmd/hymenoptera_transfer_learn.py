@@ -10,7 +10,6 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 from torchvision import models
-from tqdm import tqdm
 
 from ml_playground.dataset.hymenoptera_image_dataset import HymenopteraImageDataset
 from ml_playground.repometa import DATA_ROOT
@@ -100,7 +99,7 @@ def train_1epoch(
     train_data_count = 0
     model.train()
 
-    for inputs, labels in tqdm(train_loader):
+    for inputs, labels in train_loader:
         inputs, labels = inputs.to(device), labels.to(device)
 
         optimizer.zero_grad()
@@ -126,7 +125,7 @@ def train_1epoch(
     model.eval()
 
     with torch.no_grad():
-        for inputs, labels in tqdm(val_loader):
+        for inputs, labels in val_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, labels)
