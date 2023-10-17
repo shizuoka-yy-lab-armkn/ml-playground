@@ -1,5 +1,5 @@
+import logging
 import time
-from logging import getLogger
 from pathlib import Path
 from typing import Callable
 
@@ -15,23 +15,27 @@ from tqdm import tqdm
 from ml_playground.dataset.hymenoptera_image_dataset import HymenopteraImageDataset
 from ml_playground.repometa import DATA_ROOT
 from ml_playground.types import PHASES
+from ml_playground.util.logging import create_colored_handler
 from ml_playground.util.random import fix_seed
 
 SEED = 1933
-_log = getLogger(__name__)
+_log = logging.getLogger(__name__)
 
 
-def cmd_train(num_epochs: int, model_save_dir: Path) -> None:
+def cmd_train(model_save_dir: str | Path, *, num_epochs: int, batch_size: int) -> None:
+    logging.basicConfig(level=logging.INFO, handlers=[create_colored_handler()])
     fix_seed(SEED)
 
     data_dir = DATA_ROOT / "hymenoptera"
     assert data_dir.is_dir(), f"Directory '{data_dir}' does not exist"
 
     datasets = {phase: HymenopteraImageDataset(data_dir, phase) for phase in PHASES}
+    _log.info(f"{datasets=}")
+
     dataloaders = {
         phase: DataLoader(
             datasets[phase],
-            batch_size=64,
+            batch_size=batch_size,
             shuffle=True,
             num_workers=2,
             pin_memory=True,
@@ -50,7 +54,8 @@ def cmd_train(num_epochs: int, model_save_dir: Path) -> None:
     # Decay LR by a factor of 0.1 every 7 epochs
     lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-    model_save_dir.mkdir(exist_ok=True)
+    model_save_dir = Path(model_save_dir)
+    model_save_dir.mkdir(parents=True, exist_ok=True)
 
     resnet18 = resnet18.to(device)
     best_train_acc = 0.0
@@ -74,7 +79,7 @@ def cmd_train(num_epochs: int, model_save_dir: Path) -> None:
 
         best_train_acc = max(best_train_acc, train_acc)
         best_val_acc = max(best_val_acc, val_acc)
-        _log.info(f"{best_train_acc=:.4}, {best_val_acc=:.4}")
+        _log.info(f"{best_train_acc=:.4f}, {best_val_acc=:.4f}")
 
         save_path = model_save_dir / f"epoch-{epoch + 1:03}.pt"
         torch.save(resnet18.state_dict(), save_path)
