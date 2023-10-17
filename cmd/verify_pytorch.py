@@ -25,11 +25,11 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     a = torch.randn(2, 5).to(device)
     b = torch.randn(5, 3).to(device)
-    dot = a @ b
+    matmul = a @ b
     print(f"{device=}")
     print(f"{a=}")
     print(f"{b=}")
-    print(f"{dot=}")
+    print(f"{matmul=}")
 
 
 if __name__ == "__main__":
