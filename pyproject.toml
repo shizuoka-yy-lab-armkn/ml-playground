@@ -36,6 +36,7 @@ pillow = "^10.1.0"
 ipython = "^8.15.0"
 ruff = "^0.0.290"
 pyink = "^23.5.0"
+black = "~23.9.1"  # NOTE: pyink=23.5.0 does NOT supports black>=23.10.*
 isort = "^5.12.0"
 pyright = "^1.1.331"
 matplotlib = "^3.8.0"
