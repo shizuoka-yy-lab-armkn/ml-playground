@@ -1,0 +1,6 @@
+defaults:
+  - config_schema
+
+train:
+  batch_size: 32
+  aug_method: TimmRandAugment
