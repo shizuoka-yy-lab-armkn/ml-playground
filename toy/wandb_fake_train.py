@@ -1,5 +1,6 @@
-import wandb
 import random
+
+import wandb
 
 # start a new wandb run to track this script
 wandb.init(
