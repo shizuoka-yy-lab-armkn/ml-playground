@@ -16,8 +16,7 @@ from lightning.pytorch.utilities.types import OptimizerLRScheduler
 from omegaconf import OmegaConf
 from torch import Tensor, nn
 
-from ml_playground.proj.cifar10.config import PROJECT_NAME
-from ml_playground.proj.hymenoptera.config import CONFIG_DIR, ConfigSchema
+from ml_playground.proj.hymenoptera.config import CONFIG_DIR, PROJECT_NAME, ConfigSchema
 from ml_playground.proj.hymenoptera.data import HymenopteraDataModule
 from ml_playground.repometa import REPO_ROOT
 
@@ -51,7 +50,7 @@ class LitHymenopteraClassifier(pl.LightningModule):
         loss: Tensor = self.criterion(logits, targets)
 
         preds = torch.argmax(logits, dim=-1)
-        acc = torch.sum(preds == targets)
+        acc = torch.sum(preds == targets) / targets.size(0)
         return loss, acc
 
     def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> Tensor:
@@ -87,7 +86,7 @@ class LitHymenopteraClassifier(pl.LightningModule):
         )
         # Decay LR by a factor of 0.1 every 7 epochs
         scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size=self.cfg.train.lr_decay_step_size, gamma=0.1
+            optimizer, step_size=self.cfg.train.lr_decay_step_size, gamma=0.8
         )
         scheduler_dict = {
             "scheduler": scheduler,
@@ -98,7 +97,7 @@ class LitHymenopteraClassifier(pl.LightningModule):
 
 def _create_callbacks() -> list[pl.Callback]:
     return [
-        EarlyStopping("val_loss", mode="min"),
+        EarlyStopping("val_loss", mode="min", patience=6),
         LearningRateMonitor(logging_interval="step"),
         TQDMProgressBar(refresh_rate=10),
         ModelCheckpoint(
@@ -112,7 +111,7 @@ def _create_callbacks() -> list[pl.Callback]:
     ]
 
 
-@hydra.main(config_path=str(CONFIG_DIR), version_base=None)
+@hydra.main(config_path=str(CONFIG_DIR), config_name="default", version_base=None)
 def main(cfg: ConfigSchema) -> None:
     print(type(cfg), cfg)
     OmegaConf.to_object(cfg)  # validate with pydantic
