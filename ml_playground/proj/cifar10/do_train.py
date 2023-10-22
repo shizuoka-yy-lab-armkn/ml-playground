@@ -20,7 +20,6 @@ from lightning.pytorch.loggers import CometLogger, WandbLogger
 from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from omegaconf import OmegaConf
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
-from timm.data.mixup import Mixup
 from timm.scheduler import CosineLRScheduler
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
@@ -115,21 +114,8 @@ class LitCIFAR10Classifier(pl.LightningModule):
         self.save_hyperparameters(
             OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
         )
-
         self.cfg = cfg
-
         self.model = _create_untrained_model(cfg.model)
-
-        self.mixup = Mixup(
-            mixup_alpha=0.0,
-            cutmix_alpha=1.0,
-            cutmix_minmax=None,
-            prob=1.0,
-            switch_prob=0.0,
-            mode="batch",
-            label_smoothing=0,
-            num_classes=NUM_CLASSES,
-        )
 
     def forward(self, x: Tensor) -> Tensor:
         """
@@ -147,7 +133,9 @@ class LitCIFAR10Classifier(pl.LightningModule):
         loss: Tensor = F.nll_loss(logits, targets)
 
         preds = torch.argmax(logits, dim=-1)
-        acc = torchmetrics.functional.accuracy(preds, targets, "multiclass")
+        acc = torchmetrics.functional.accuracy(
+            preds, targets, "multiclass", num_classes=NUM_CLASSES
+        )
 
         return loss, acc
 
@@ -160,7 +148,6 @@ class LitCIFAR10Classifier(pl.LightningModule):
             self.print(f"{batch[0].size()=}, {batch[1].size()=}")
 
         inputs, targets = batch
-        inputs, targets = self.mixup(inputs, targets)
         loss, acc = self._forward_and_calc_metrics(inputs, targets)
         self.log("train_loss", loss, prog_bar=True)
         self.log("train_acc", acc, prog_bar=True)
