@@ -1,29 +1,12 @@
 import logging
-from typing import Literal, NewType
 
 import fire
 import numpy as np
 
+from ml_playground.proj.ymc_bfa_imu.data import RECORDS, ActionID
 from ml_playground.repometa import DATA_ROOT
 from ml_playground.util.algo import RunlengthBlock, divup, runlength
 from ml_playground.util.logging import create_colored_handler
-
-Actor = Literal["Anakamura", "ksuzuki", "master", "ueyama"]
-DateStr = str
-ActionID = NewType("ActionID", int)
-
-RECORDS: list[tuple[Actor, DateStr, list[int]]] = [
-    ("Anakamura", "0628", [1, 2, 3, 4, 6, 7, 8, 9, 10]),
-    ("Anakamura", "0703", [1, 2, 3, 5, 6, 7, 8, 9, 11]),
-    ("Anakamura", "0628", [1, 2, 3, 4, 6, 7, 8, 9, 10, 11]),
-    ("ksuzuki", "0627", [1, 2, 4, 5, 6, 7, 8, 9, 10]),
-    ("ksuzuki", "0704", [1, 2, 3, 4, 5, 7, 9, 10, 11, 13]),
-    ("ksuzuki", "0706", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
-    ("master", "0620", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-    ("ueyama", "0628", [2, 5, 6, 8, 9, 10, 11, 13]),
-    ("ueyama", "0705", [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
-    ("ueyama", "0706", [1, 2, 3, 4, 5, 7, 8, 9, 10]),
-]
 
 _log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, handlers=[create_colored_handler()])
