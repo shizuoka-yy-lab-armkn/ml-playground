@@ -1,0 +1,16 @@
+defaults:
+  - config_schema
+  - _self_
+
+model: ???
+exp_name: ???
+
+train:
+  batch_size: 256
+  aug_method: RandAugment
+  max_epoch: 30
+  lr_warmup_epochs: 10
+  lr: 1e-2
+  lr_min: 1e-4
+  lr_start: 1e-4
+  weight_decay: 5e-4
