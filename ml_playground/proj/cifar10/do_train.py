@@ -1,9 +1,11 @@
 import os
+from pathlib import Path
 
 import comet_ml as _
 import hydra
 import lightning.pytorch as pl
 import torch
+import torch.nn.functional as F
 import torchmetrics
 import torchvision
 import torchvision.transforms.v2 as transformsv2
@@ -17,12 +19,11 @@ from lightning.pytorch.callbacks import (
 from lightning.pytorch.loggers import CometLogger, WandbLogger
 from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from omegaconf import OmegaConf
-from pl_bolts.datamodules import CIFAR10DataModule
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
 from timm.data.mixup import Mixup
-from timm.loss import SoftTargetCrossEntropy
 from timm.scheduler import CosineLRScheduler
 from torch import Tensor, nn
+from torch.utils.data import DataLoader
 
 from ml_playground.proj.cifar10.config import (
     CONFIG_DIR,
@@ -63,6 +64,48 @@ def _get_val_transform() -> transformsv2.Transform:
     ])
 
 
+class CIFAR10DataModule(pl.LightningDataModule):
+
+    def __init__(self, data_root: Path, bsz: int, aug: AugmentMethod) -> None:
+        super().__init__()
+        self.data_root = data_root
+        self.bsz = bsz
+        self.aug = aug
+
+    def setup(self, stage: str) -> None:
+        del stage
+        self.train_dataset = torchvision.datasets.CIFAR10(
+            root=str(self.data_root),
+            train=True,
+            download=True,
+            transform=_get_train_transform(self.aug),
+        )
+        self.val_dataset = torchvision.datasets.CIFAR10(
+            root=str(self.data_root),
+            train=False,
+            download=True,
+            transform=_get_val_transform(),
+        )
+
+    def train_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.bsz,
+            shuffle=True,
+            num_workers=2,
+            pin_memory=True,
+        )
+
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.bsz,
+            shuffle=False,
+            num_workers=2,
+            pin_memory=True,
+        )
+
+
 class LitCIFAR10Classifier(pl.LightningModule):
 
     def __init__(self, cfg: ConfigSchema) -> None:
@@ -88,17 +131,20 @@ class LitCIFAR10Classifier(pl.LightningModule):
             num_classes=NUM_CLASSES,
         )
 
-        self.criterion = SoftTargetCrossEntropy()
-
     def forward(self, x: Tensor) -> Tensor:
-        return self.model(x)
+        """
+        x:   [bsz, channel=3, H=32, W=32]
+        out: [bsz, num_classes]
+        """
+        out = self.model(x)
+        return F.log_softmax(out, dim=-1)
 
     def _forward_and_calc_metrics(
         self, inputs: Tensor, targets: Tensor
     ) -> tuple[Tensor, Tensor]:
         """Returns (loss, accuracy)"""
         logits = self.model(inputs)
-        loss: Tensor = self.criterion(logits, targets)
+        loss: Tensor = F.nll_loss(logits, targets)
 
         preds = torch.argmax(logits, dim=-1)
         acc = torchmetrics.functional.accuracy(preds, targets, "multiclass")
@@ -215,19 +261,15 @@ def main(cfg: ConfigSchema) -> None:
         logger=[wandb_logger, comet_logger],
     )
     dm = CIFAR10DataModule(
-        data_dir=str(DATA_ROOT / "cifar10"),
-        batch_size=cfg.train.batch_size,
-        num_workers=2,
-        train_transforms=_get_train_transform(cfg.train.aug_method),
-        val_transforms=_get_val_transform(),
+        DATA_ROOT / "cifar10", bsz=cfg.train.batch_size, aug=cfg.train.aug_method
     )
-    dm.setup()
+    dm.prepare_data()
     model = LitCIFAR10Classifier(cfg)
 
     wandb_logger.watch(model.model)
 
     print("###################### Starting trainer.fit() ########################")
-    trainer.fit(model, datamodule=dm)  # type: ignore
+    trainer.fit(model, datamodule=dm)
 
 
 if __name__ == "__main__":
