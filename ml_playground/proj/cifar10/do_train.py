@@ -212,8 +212,7 @@ class LitCIFAR10Classifier(pl.LightningModule):
             ),
             "interval": "step",
         }
-        return {"optimizer": optimizer, "lr_scheduler": scheduler_dict} #type: ignore
-
+        return {"optimizer": optimizer, "lr_scheduler": scheduler_dict}  # type: ignore
 
     def lr_scheduler_step(self, scheduler: CosineLRScheduler, metric) -> None:
         del metric
