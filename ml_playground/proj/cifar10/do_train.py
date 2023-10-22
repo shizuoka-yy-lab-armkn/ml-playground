@@ -1,5 +1,6 @@
 import os
 
+import comet_ml as _
 import hydra
 import lightning.pytorch as pl
 import torch
@@ -47,15 +48,12 @@ def _create_untrained_model(model: ModelType) -> nn.Module:
 
 
 def _get_train_transform(aug: AugmentMethod) -> transformsv2.Transform:
-    transformsv2.RandAugment()
     if aug == AugmentMethod.RandAugment:
         return transformsv2.Compose([
             transformsv2.RandAugment(),
             transformsv2.ToTensor(),
             cifar10_normalization(),
         ])
-
-    raise ValueError(f"Invalid augmentation method: got={aug}")
 
 
 def _get_val_transform() -> transformsv2.Transform:
@@ -69,7 +67,11 @@ class LitCIFAR10Classifier(pl.LightningModule):
 
     def __init__(self, cfg: ConfigSchema) -> None:
         super().__init__()
-        self.save_hyperparameters(cfg)
+
+        # convert to dict using OmegaConf
+        self.save_hyperparameters(
+            OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+        )
 
         self.cfg = cfg
 
@@ -219,10 +221,13 @@ def main(cfg: ConfigSchema) -> None:
         train_transforms=_get_train_transform(cfg.train.aug_method),
         val_transforms=_get_val_transform(),
     )
+    dm.setup()
     model = LitCIFAR10Classifier(cfg)
 
     wandb_logger.watch(model.model)
-    trainer.fit(model, dm)
+
+    print("###################### Starting trainer.fit() ########################")
+    trainer.fit(model, datamodule=dm)  # type: ignore
 
 
 if __name__ == "__main__":
