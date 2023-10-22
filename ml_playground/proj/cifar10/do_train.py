@@ -22,6 +22,7 @@ from omegaconf import OmegaConf
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
 from timm.scheduler import CosineLRScheduler
 from torch import Tensor, nn
+from torch.optim.lr_scheduler import OneCycleLR
 from torch.utils.data import DataLoader
 
 from ml_playground.proj.cifar10.config import (
@@ -142,7 +143,7 @@ class LitCIFAR10Classifier(pl.LightningModule):
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        if self.current_epoch <= 1 and batch_idx <= 1:
+        if self.current_epoch == 0 and batch_idx == 0:
             self.print("---------- train_step() ------------")
             self.print(f"{self.current_epoch=}, {batch_idx=}")
             self.print(f"{batch[0].size()=}, {batch[1].size()=}")
@@ -157,7 +158,7 @@ class LitCIFAR10Classifier(pl.LightningModule):
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        if self.current_epoch <= 1 and batch_idx <= 1:
+        if self.current_epoch == 0 and batch_idx == 0:
             self.print("---------- validation_step() ------------")
             self.print(f"{self.current_epoch=}, {batch_idx=}")
             self.print(f"{batch[0].size()=}, {batch[1].size()=}")
@@ -170,31 +171,49 @@ class LitCIFAR10Classifier(pl.LightningModule):
         return loss
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        cfg = self.cfg.train
-        optimizer = torch.optim.AdamW(
+        # cfg = self.cfg.train
+        # optimizer = torch.optim.AdamW(
+        #     self.parameters(),
+        #     lr=cfg.lr,
+        #     weight_decay=self.cfg.train.weight_decay,
+        # )
+        #
+        # # doc: https://timm.fast.ai/SGDR#CosineLRScheduler
+        # scheduler = CosineLRScheduler(
+        #     optimizer,
+        #     t_initial=cfg.max_epoch,
+        #     lr_min=cfg.lr_min,
+        #     warmup_t=cfg.lr_warmup_epochs,
+        #     warmup_lr_init=cfg.lr_start,  # type: ignore
+        #     warmup_prefix=True,
+        # )
+        #
+        # return {
+        #     "optimizer": optimizer,
+        #     "lr_scheduler": {
+        #         "scheduler": scheduler,  # type: ignore
+        #         "interval": "epoch",
+        #         "strict": True,
+        #     },
+        # }
+        optimizer = torch.optim.SGD(
             self.parameters(),
-            lr=cfg.lr,
-            weight_decay=self.cfg.train.weight_decay,
+            lr=self.cfg.train.lr,
+            momentum=0.9,
+            weight_decay=5e-4,
         )
-
-        # doc: https://timm.fast.ai/SGDR#CosineLRScheduler
-        scheduler = CosineLRScheduler(
-            optimizer,
-            t_initial=cfg.max_epoch,
-            lr_min=cfg.lr_min,
-            warmup_t=cfg.lr_warmup_epochs,
-            warmup_lr_init=cfg.lr_start,  # type: ignore
-            warmup_prefix=True,
-        )
-
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": scheduler,  # type: ignore
-                "interval": "epoch",
-                "strict": True,
-            },
+        steps_per_epoch = 45000 // self.cfg.train.batch_size
+        scheduler_dict = {
+            "scheduler": OneCycleLR(
+                optimizer,
+                0.1,
+                epochs=self.cfg.train.max_epoch,
+                steps_per_epoch=steps_per_epoch,
+            ),
+            "interval": "step",
         }
+        return {"optimizer": optimizer, "lr_scheduler": scheduler_dict} #type: ignore
+
 
     def lr_scheduler_step(self, scheduler: CosineLRScheduler, metric) -> None:
         del metric
