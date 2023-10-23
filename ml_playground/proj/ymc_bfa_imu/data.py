@@ -1,4 +1,4 @@
-from typing import Literal, NewType
+from typing import Any, Generator, Literal, NewType
 
 import lightning.pytorch as pl
 import numpy as np
@@ -30,8 +30,10 @@ RECORDS: list[tuple[Actor, DateStr, list[int]]] = [
 ]
 
 
-# 初心者->0, 熟練者->1
-Label = Literal[0, 1]
+def full_records() -> Generator[tuple[Actor, DateStr, ActionID, Label], Any, Any]:
+    for actor, date, try_ids in RECORDS:
+        for try_id in try_ids:
+            yield actor, date, ActionID(try_id), (1 if actor == "master" else 0)
 
 
 class ImuDataSet1(Dataset):
@@ -79,18 +81,20 @@ class ImuDataSet1(Dataset):
         ("ksuzuki", "0627", ActionID(9), 0),
     ]
 
-    def __init__(self, *, train: bool) -> None:
+    def __init__(self, *, train: bool = False, full: bool = False) -> None:
         super().__init__()
 
         src = self.TRAIN if train else self.VAL
+        if full:
+            src = full_records()
 
-        self.dataset: list[tuple[Tensor, Label]] = []
+        self.dataset: list[tuple[Tensor, Label, str]] = []
 
         for actor, date, aid, label in src:
             path = DATA_ROOT / "ymc-bfa-imu" / "12" / actor / f"{date}_{aid:03}.npy"
             dat = Tensor(np.load(path))
             assert dat.size(0) == 18
-            self.dataset.append((dat, label))
+            self.dataset.append((dat, label, f"{actor}_{date}_{aid:03}"))
 
     def __getitem__(self, index):
         assert type(index) is int
@@ -110,13 +114,13 @@ class ImuDataModule(pl.LightningDataModule):
         self.val_dataset = ImuDataSet1(train=False)
 
     @staticmethod
-    def collate_fn(batch: list[tuple[Tensor, Label]]) -> tuple[Tensor, Tensor]:
+    def collate_fn(batch: list[tuple[Tensor, Label, str]]) -> tuple[Tensor, Tensor]:
         """
         pad and create mask
         """
-        max_len = max(x.size(-1) for x, _ in batch)
-        xs = torch.stack([F.pad(x, pad=(0, max_len - x.size(-1))) for x, _ in batch])
-        ys = torch.LongTensor([y for _, y in batch])
+        max_len = max(x.size(-1) for x, _, _ in batch)
+        xs = torch.stack([F.pad(x, pad=(0, max_len - x.size(-1))) for x, _, _ in batch])
+        ys = torch.LongTensor([y for _, y, _ in batch])
         assert xs.size() == (len(batch), 18, max_len)
         return xs, ys
 

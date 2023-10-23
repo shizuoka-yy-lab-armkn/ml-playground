@@ -24,7 +24,7 @@ def _generate_from_orig_imu() -> None:
             with open(orig_root / "groundTruth" / f"{i}.txt") as f:
                 framewise_gtruth = [ActionID(int(line)) for line in f]
 
-            longest_segs: dict[ActionID, RunlengthBlock[ActionID]] = dict()
+            longest_segs: dict[ActionID, RunlengthBlock[ActionID]] = {}
             for seg in runlength(framewise_gtruth):
                 action_id = seg.val
                 if action_id not in longest_segs:
@@ -36,15 +36,14 @@ def _generate_from_orig_imu() -> None:
             num_total_frames = len(framewise_gtruth)
             assert type(data) is np.ndarray
             assert data.shape == (18, num_total_frames)
-            data = data.T
 
             for action_id, seg in longest_segs.items():
                 path = dest_root / str(action_id) / actor / f"{date}_{try_id:03}.npy"
                 path.parent.mkdir(parents=True, exist_ok=True)
-                d = data[seg.begin : seg.end : 3, :]  # 元データの90fpsを30fpsへリサンプリング
+                d = data[:, seg.begin : seg.end : 3]  # 元データの90fpsを30fpsへリサンプリング
                 assert d.shape == (
-                    divup(seg.len, 3),
                     18,
+                    divup(seg.len, 3),
                 ), f"Invalid shape: {d.shape} ({seg=} {i=})"
                 np.save(path, d)
 

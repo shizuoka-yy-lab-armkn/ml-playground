@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import comet_ml as _
 import hydra
 import lightning.pytorch as pl
 import torch
