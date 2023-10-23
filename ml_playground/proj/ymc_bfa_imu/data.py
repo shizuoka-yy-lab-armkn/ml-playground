@@ -2,6 +2,8 @@ from typing import Literal, NewType
 
 import lightning.pytorch as pl
 import numpy as np
+import torch
+import torch.nn.functional as F
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 
@@ -88,6 +90,8 @@ class ImuDataSet1(Dataset):
             self.dataset.append((dat, label))
 
     def __getitem__(self, index):
+        assert type(index) is int
+        assert 0 <= index < len(self.dataset)
         return self.dataset[index]
 
     def __len__(self) -> int:
@@ -102,6 +106,17 @@ class ImuDataModule(pl.LightningDataModule):
         self.train_dataset = ImuDataSet1(train=True)
         self.val_dataset = ImuDataSet1(train=False)
 
+    @staticmethod
+    def collate_fn(batch: list[tuple[Tensor, Label]]) -> tuple[Tensor, Tensor]:
+        """
+        pad and create mask
+        """
+        max_len = max(x.size(-1) for x, _ in batch)
+        xs = torch.stack([F.pad(x, pad=(0, max_len - x.size(-1))) for x, _ in batch])
+        ys = torch.LongTensor([y for _, y in batch])
+        assert xs.size() == (len(batch), 18, max_len)
+        return xs, ys
+
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self.train_dataset,
@@ -109,6 +124,7 @@ class ImuDataModule(pl.LightningDataModule):
             shuffle=True,
             num_workers=2,
             pin_memory=True,
+            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -118,4 +134,5 @@ class ImuDataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=2,
             pin_memory=True,
+            collate_fn=self.collate_fn,
         )

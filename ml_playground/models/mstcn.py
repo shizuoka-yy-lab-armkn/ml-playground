@@ -1,5 +1,5 @@
 import torch.nn.functional as F
-from torch import nn
+from torch import Tensor, nn
 
 
 class MultiStageModel(nn.Module):
@@ -43,7 +43,8 @@ class MultiStageModel(nn.Module):
         # -> (B, out_feat_dim, T)
         out = self.stage_z(F.softmax(out, dim=1))
 
-        out = self.avgpool(out)
+        out: Tensor = self.avgpool(out)
+        out = out.squeeze(dim=-1)
 
         return out
 
