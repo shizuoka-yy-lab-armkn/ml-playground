@@ -98,13 +98,14 @@ def main(cfg: ConfigSchema) -> None:
     )
     trainer = pl.Trainer(
         accelerator="gpu",
-        deterministic=True,
+        deterministic=False,
         callbacks=create_common_callbacks(
             proj=PROJECT_NAME,
             exp=cfg.exp_name,
             early_stopping_patience=cfg.early_stopping_patience,
         ),
         max_epochs=cfg.train.max_epoch,
+        min_epochs=cfg.train.min_epoch,
         logger=[wandb_logger, comet_logger],
     )
     dm = ImuDataModule(bsz=cfg.train.batch_size)

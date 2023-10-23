@@ -9,11 +9,12 @@ CONFIG_DIR = PROJECT_DIR / "configs"
 
 @dataclass
 class TrainConfig:
-    batch_size: int = 8
-    max_epoch: int = 50
-    lr: float = 1e-3
+    batch_size: int = 12
+    max_epoch: int = 150
+    min_epoch: int = 30
+    lr: float = 3e-3
     weight_decay: float = 1e-5
-    lr_decay_step_size: int = 7
+    lr_decay_step_size: int = 20
 
 
 @dataclass

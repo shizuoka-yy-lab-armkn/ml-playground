@@ -11,11 +11,11 @@ class MstcnBinaryClassifier(nn.Module):
             num_stages=3,
             num_layers=9,
             in_feat_dim=18,
-            num_f_maps=64,
-            bottleneck_dim=48,
-            out_feat_dim=128,
+            num_f_maps=48,
+            bottleneck_dim=32,
+            out_feat_dim=64,
         )
-        self.fc = nn.Linear(128, 2)
+        self.fc = nn.Linear(64, 2)
 
     def forward(self, x):
         """(B, 18, T) -> (B, 2)"""
