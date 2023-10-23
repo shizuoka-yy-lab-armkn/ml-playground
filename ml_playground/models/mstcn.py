@@ -18,7 +18,7 @@ class MultiStageModel(nn.Module):
         in_feat_dim: int,
         bottleneck_dim: int,
         out_feat_dim: int,
-    ):
+    ) -> None:
         super().__init__()
         self.stage1 = nn.Sequential(
             SingleStageModel(num_layers, num_f_maps, in_feat_dim, bottleneck_dim),
@@ -74,7 +74,7 @@ class SingleStageModel(nn.Module):
 
     def __init__(
         self, num_layers: int, num_f_maps: int, in_feat_dim: int, bottleneck_dim: int
-    ):
+    ) -> None:
         super().__init__()
         self.conv_1x1 = nn.Conv1d(in_feat_dim, num_f_maps, 1)
         self.layers = nn.ModuleList(
@@ -101,7 +101,7 @@ class DilatedResidualLayer(nn.Module):
     input.size() == output.size()
     """
 
-    def __init__(self, dilation: int, inout_channels: int):
+    def __init__(self, dilation: int, inout_channels: int) -> None:
         super().__init__()
         self.conv_dilated = nn.Conv1d(
             inout_channels,
