@@ -13,10 +13,13 @@ Actor = Literal["Anakamura", "ksuzuki", "master", "ueyama"]
 DateStr = str
 ActionID = NewType("ActionID", int)
 
+# 初心者->0, 熟練者->1
+Label = Literal[0, 1]
+
 RECORDS: list[tuple[Actor, DateStr, list[int]]] = [
     ("Anakamura", "0628", [1, 2, 3, 4, 6, 7, 8, 9, 10]),
     ("Anakamura", "0703", [1, 2, 3, 5, 6, 7, 8, 9, 11]),
-    ("Anakamura", "0628", [1, 2, 3, 4, 6, 7, 8, 9, 10, 11]),
+    ("Anakamura", "0706", [1, 2, 3, 4, 6, 7, 8, 9, 10, 11]),
     ("ksuzuki", "0627", [1, 2, 4, 5, 6, 7, 8, 9, 10]),
     ("ksuzuki", "0704", [1, 2, 3, 4, 5, 7, 9, 10, 11, 13]),
     ("ksuzuki", "0706", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
