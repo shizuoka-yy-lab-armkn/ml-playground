@@ -26,16 +26,14 @@ class MultiStageModel(nn.Module):
             nn.ReLU(inplace=True),
         )
         self.stages = nn.ModuleList(
-            [
-                nn.Sequential(
-                    SingleStageModel(
-                        num_layers, num_f_maps, bottleneck_dim, bottleneck_dim
-                    ),
-                    nn.BatchNorm1d(bottleneck_dim),
-                    nn.ReLU(inplace=True),
-                )
-                for _ in range(num_stages - 1)
-            ]
+            nn.Sequential(
+                SingleStageModel(
+                    num_layers, num_f_maps, bottleneck_dim, bottleneck_dim
+                ),
+                nn.BatchNorm1d(bottleneck_dim),
+                nn.ReLU(inplace=True),
+            )
+            for _ in range(num_stages - 1)
         )
         assert (
             out_feat_dim >= self.AVG_POOL_OUT_SIZE
@@ -78,7 +76,7 @@ class SingleStageModel(nn.Module):
         super().__init__()
         self.conv_1x1 = nn.Conv1d(in_feat_dim, num_f_maps, 1)
         self.layers = nn.ModuleList(
-            [DilatedResidualLayer(2**i, num_f_maps) for i in range(num_layers)]
+            DilatedResidualLayer(2**i, num_f_maps) for i in range(num_layers)
         )
         self.conv_out = nn.Conv1d(num_f_maps, bottleneck_dim, 1)
 
